@@ -1,0 +1,25 @@
+---
+- name: "Build and push images"
+  hosts: localhost
+  vars_files:
+    - secret-cr.yml
+  tasks:
+    - name: 'Build and push web server image'
+      containers.podman.podman_image:
+        name: server-apache
+        path: ./files/img-web-server/
+        push: yes
+        username: "{{ username }}"
+        password: "{{ password }}"
+        push_args:
+          dest: mgoncr.azurecr.io/httpd-img
+
+    - name: 'Build and push aks image'
+      containers.podman.podman_image:
+        name: mongo-img
+        path: ./files/img-k8s/
+        push: yes
+        username: "{{ username }}"
+        password: "{{ password }}"
+        push_args:
+          dest: mgoncr.azurecr.io/mongo

@@ -1,0 +1,1 @@
+ansible-playbook -i hosts --user azureuser --ask-vault-password playbook-deploy-container-ws.yml

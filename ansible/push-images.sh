@@ -1,0 +1,1 @@
+ansible-playbook --user azureuser --ask-vault-password playbook-push-web-image.yml

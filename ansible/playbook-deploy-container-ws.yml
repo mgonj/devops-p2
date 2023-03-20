@@ -1,0 +1,67 @@
+---
+- name: "Deploy container"
+  hosts: all
+  become: true
+  vars_files:
+    - secret-cr.yml
+  tasks:
+
+    - name: 'Install podman'
+      yum:
+        name: podman
+        state: latest
+
+    - name: 'Install openssl'
+      yum:
+        name: openssl
+        state: latest
+
+    - name: 'Create workdir'
+      file:
+        path: workdir
+        state: directory
+
+    - name: Generate an OpenSSL private key with a different size (2048 bits)
+      community.crypto.openssl_privatekey:
+        path: ./workdir/localhost.key
+        size: 2048
+
+    - name: Generate an OpenSSL Certificate Signing Request with Subject information
+      community.crypto.openssl_csr:
+        path: ./workdir/localhost.csr
+        privatekey_path: ./workdir/localhost.key
+        country_name: ES
+        organization_name: CursoDevops
+        common_name: devopsP2
+
+    - name: Generate a Self Signed OpenSSL certificate
+      community.crypto.x509_certificate:
+        path: ./workdir/localhost.crt
+        privatekey_path: ./workdir/localhost.key
+        csr_path: ./workdir/localhost.csr
+        provider: selfsigned
+
+    - name: Pull image
+      containers.podman.podman_image:
+        name: mgoncr.azurecr.io/httpd-img/server-apache:latest
+        username: "{{ username }}"
+        password: "{{ password }}"
+
+    - name: Run container
+      containers.podman.podman_container:
+        name: server-container2
+        image: mgoncr.azurecr.io/httpd-img/server-apache
+        state: started
+        ports:
+          - "443:80"
+
+    - name: Install passlib python package
+      ansible.builtin.pip:
+        name: passlib
+
+    - name: Add a user to a password file and ensure permissions are set
+      community.general.htpasswd:
+        path: ./workdir/.cred
+        name: test
+        password: 'test2'
+
